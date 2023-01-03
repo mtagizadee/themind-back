@@ -5,15 +5,16 @@ import { AppService } from "./app.service";
 import { Redis } from "ioredis";
 import { RedisModule } from "@liaoliaots/nestjs-redis";
 import { RedisKeys } from "src/common/enums";
+import { AuthModule } from "src/auth/auth.module";
 
 @Module({
   imports: [
+    AuthModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
     }),
     RedisModule.forRootAsync({
-      imports: [ConfigModule],
       useFactory: () => ({
         config: {
           host: process.env.REDIS_HOST,

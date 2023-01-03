@@ -19,11 +19,18 @@ export class AuthService {
    */
   async addUser(addUserDto: AddUserDto) {
     const { nickname } = addUserDto;
-    const jwtToken = this.jwt.sign({ nickname });
-    const whitelistJSON = await this.redis.get(RedisKeys.Whitelist);
+    // geenrate a token
+    const jwtToken = this.jwt.sign(
+      { nickname },
+      {
+        secret: process.env.JWT_SECRET,
+        expiresIn: "12h",
+      }
+    );
 
     try {
       // add the token to the whitelist
+      const whitelistJSON = await this.redis.get(RedisKeys.Whitelist);
       const whitelist: Whitelist = JSON.parse(whitelistJSON);
       whitelist.push(jwtToken);
       await this.redis.set(RedisKeys.Whitelist, JSON.stringify(whitelist));
