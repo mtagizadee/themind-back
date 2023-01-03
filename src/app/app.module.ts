@@ -24,7 +24,7 @@ import { RedisKeys } from "src/common/enums";
               // whitelist is the list of tokes that are allowed to play the game
               if (!(await redisClient.get(RedisKeys.Whitelist))) {
                 try {
-                  await redisClient.set(RedisKeys.Whitelist, JSON.stringify({}));
+                  await redisClient.set(RedisKeys.Whitelist, JSON.stringify([]));
                   console.log("Successfully initialized empty whitelist");
                 } catch (error) {
                   console.log("Error initializing the empty whitelist");
