@@ -23,7 +23,7 @@ export class LobbiesService {
       const lobbies = JSON.parse(await this.redis.get("lobbies"));
       lobbies[id] = {
         playersNumber,
-        players: [{ id: userId }],
+        guest: [],
         authorId: userId,
       };
       await this.redis.set("lobbies", JSON.stringify(lobbies));
