@@ -1,3 +1,3 @@
 export enum RedisKeys {
-  Whitelist = "whitelist",
+  Lobbies = "lobbies",
 }

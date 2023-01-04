@@ -6,10 +6,12 @@ import { Redis } from "ioredis";
 import { RedisModule } from "@liaoliaots/nestjs-redis";
 import { RedisKeys } from "src/common/enums";
 import { AuthModule } from "src/auth/auth.module";
+import { LobbiesModule } from "src/lobbies/lobbies.module";
 
 @Module({
   imports: [
     AuthModule,
+    LobbiesModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
@@ -21,14 +23,14 @@ import { AuthModule } from "src/auth/auth.module";
           port: parseInt(process.env.REDIS_PORT),
           onClientCreated: (redisClient: Redis) => {
             redisClient.on("ready", async () => {
-              // initialize empty whitelist if it doesn't exist
-              // whitelist is the list of tokes that are allowed to play the game
-              if (!(await redisClient.get(RedisKeys.Whitelist))) {
+              // initialize empty lobbies object if it doesn't exist
+              // object is the list of tokes that are allowed to play the game
+              if (!(await redisClient.get(RedisKeys.Lobbies))) {
                 try {
-                  await redisClient.set(RedisKeys.Whitelist, JSON.stringify([]));
-                  console.log("Successfully initialized empty whitelist");
+                  await redisClient.set(RedisKeys.Lobbies, JSON.stringify({}));
+                  console.log("Successfully initialized empty lobbies");
                 } catch (error) {
-                  console.log("Error initializing the empty whitelist");
+                  console.log("Error initializing the empty lobbies");
                 }
               }
             });
