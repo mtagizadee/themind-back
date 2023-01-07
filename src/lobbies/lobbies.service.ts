@@ -43,12 +43,15 @@ export class LobbiesService {
    * @returns the lobby
    */
   async findOne(id: string) {
-    const lobbies = await this.deleteExpiredLobbies();
+    try {
+      const lobbies = await this.deleteExpiredLobbies();
+      const lobby: TLobby = lobbies[id];
+      if (!lobby) throw new NotFoundException("Lobby is not found!");
 
-    const lobby: TLobby = lobbies[id];
-    if (!lobby) throw new NotFoundException("Lobby is not found!");
-
-    return lobby;
+      return lobby;
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
@@ -61,14 +64,13 @@ export class LobbiesService {
 
       // iterate over and delete those that have expired
       const currentDate = new Date();
-      for (const lobbyId in Object.keys(lobbies)) {
+      Object.keys(lobbies).forEach((lobbyId: string) => {
         if (lobbies[lobbyId].expiresAt < currentDate) {
           delete lobbies[lobbyId];
         }
-      }
+      });
 
       await this.redis.set("lobbies", JSON.stringify(lobbies));
-
       return lobbies;
     } catch (error) {
       throw new ConflictException("Could not delete expired lobbies");
