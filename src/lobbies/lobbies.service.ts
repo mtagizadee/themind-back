@@ -4,6 +4,7 @@ import Redis from "ioredis";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
 import { v4 } from "uuid";
 import { TLobby } from "./types/lobby.type";
+import { generateExpirationDate } from "src/helpers";
 
 @Injectable()
 export class LobbiesService {
@@ -26,6 +27,7 @@ export class LobbiesService {
         playersNumber,
         players: [],
         authorId: userId,
+        expiresAt: generateExpirationDate(1),
       } as TLobby;
       await this.redis.set("lobbies", JSON.stringify(lobbies));
 
@@ -41,10 +43,35 @@ export class LobbiesService {
    * @returns the lobby
    */
   async findOne(id: string) {
-    const lobbies = JSON.parse(await this.redis.get("lobbies"));
+    const lobbies = await this.deleteExpiredLobbies();
+
     const lobby: TLobby = lobbies[id];
     if (!lobby) throw new NotFoundException("Lobby is not found!");
 
     return lobby;
+  }
+
+  /**
+   * Deletes the expired lobbies (1 day)
+   * @returns the lobbies after deleting the expired ones
+   */
+  private async deleteExpiredLobbies() {
+    try {
+      const lobbies = JSON.parse(await this.redis.get("lobbies"));
+
+      // iterate over and delete those that have expired
+      const currentDate = new Date();
+      for (const lobbyId in Object.keys(lobbies)) {
+        if (lobbies[lobbyId].expiresAt < currentDate) {
+          delete lobbies[lobbyId];
+        }
+      }
+
+      await this.redis.set("lobbies", JSON.stringify(lobbies));
+
+      return lobbies;
+    } catch (error) {
+      throw new ConflictException("Could not delete expired lobbies");
+    }
   }
 }
