@@ -24,6 +24,7 @@ export class LobbiesController {
     return this.lobbiesService.generateInvitationLink(id, userId);
   }
 
+  // TODO: test this endpoint
   @Patch(":id/join")
   join(@Param("id") id: string, @User("id") userId: string) {
     return this.lobbiesService.join(id, userId);
