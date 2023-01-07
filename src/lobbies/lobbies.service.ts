@@ -1,9 +1,14 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { InjectRedis } from "@liaoliaots/nestjs-redis";
 import Redis from "ioredis";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
 import { v4 } from "uuid";
-import { TLobby } from "./types/lobby.type";
+import { lobbyResponseFactory, TLobby } from "./types/lobby.type";
 import { generateExpirationDate } from "src/helpers";
 
 @Injectable()
@@ -19,12 +24,14 @@ export class LobbiesService {
   async create(createLobbyDto: CreateLobbyDto, userId: string) {
     const { playersNumber } = createLobbyDto;
     const id = v4();
+    const wsToken = v4();
 
     try {
       // Get the lobbies from the redis and add the new one
       const lobbies = JSON.parse(await this.redis.get("lobbies"));
       lobbies[id] = {
         playersNumber,
+        wsToken,
         players: [],
         authorId: userId,
         expiresAt: generateExpirationDate(1),
@@ -48,7 +55,7 @@ export class LobbiesService {
       const lobby: TLobby = lobbies[id];
       if (!lobby) throw new NotFoundException("Lobby is not found!");
 
-      return lobby;
+      return lobbyResponseFactory(lobby);
     } catch (error) {
       throw error;
     }
@@ -62,9 +69,7 @@ export class LobbiesService {
    */
   async generateInvitationLink(id: string, userId: string) {
     try {
-      const lobbies = await this.deleteExpiredLobbies();
-      const lobby: TLobby = lobbies[id];
-      if (!lobby) throw new NotFoundException("Lobby is not found!");
+      const lobby = await this.findOne(id);
 
       // check if the user is the author of the lobby
       if (lobby.authorId !== userId) {
@@ -73,9 +78,34 @@ export class LobbiesService {
 
       // generate the invitation link
       const link = process.env.FRONT_URL + "/invite/" + id;
-      await this.redis.set("lobbies", JSON.stringify(lobbies));
-
       return { link };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Adds a user to the lobby
+   * @param id - the id of the lobby
+   * @param userId - the id of the user that wants to join the lobby
+   * @returns the wsToken of the lobby
+   */
+  async join(id: string, userId: string) {
+    try {
+      const lobby = await this.findOne(id);
+
+      // check if the user already joined the lobby
+      if (lobby.players.includes(userId)) {
+        throw new ForbiddenException("You already joined the lobby!");
+      }
+
+      // add user to the lobby and update the lobbies
+      lobby.players.push(userId);
+      const lobbies = JSON.parse(await this.redis.get("lobbies"));
+      lobbies[id] = lobby;
+
+      await this.redis.set("lobbies", JSON.stringify(lobbies));
+      return { wsToken: lobby.wsToken };
     } catch (error) {
       throw error;
     }

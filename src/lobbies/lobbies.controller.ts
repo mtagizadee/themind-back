@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Body, Post, Get, Param } from "@nestjs/common";
+import { Controller, UseGuards, Body, Post, Get, Param, Patch } from "@nestjs/common";
 import { User } from "src/auth/decorators/user.decorator";
 import { JwtGuard } from "src/auth/guards/jwt.guard";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
@@ -22,5 +22,10 @@ export class LobbiesController {
   @Post(":id/invitation-link")
   generateInvitationLink(@Param("id") id: string, @User("id") userId: string) {
     return this.lobbiesService.generateInvitationLink(id, userId);
+  }
+
+  @Patch(":id/join")
+  join(@Param("id") id: string, @User("id") userId: string) {
+    return this.lobbiesService.join(id, userId);
   }
 }
