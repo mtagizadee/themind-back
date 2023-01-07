@@ -1,4 +1,4 @@
-import { Controller, UseGuards, Body, Post } from "@nestjs/common";
+import { Controller, UseGuards, Body, Post, Get, Param } from "@nestjs/common";
 import { User } from "src/auth/decorators/user.decorator";
 import { JwtGuard } from "src/auth/guards/jwt.guard";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
@@ -12,5 +12,10 @@ export class LobbiesController {
   @Post()
   create(@Body() createLobbyDto: CreateLobbyDto, @User("id") userId: string) {
     return this.lobbiesService.create(createLobbyDto, userId);
+  }
+
+  @Get(":id")
+  findOne(@Param("id") id: string) {
+    return this.lobbiesService.findOne(id);
   }
 }
