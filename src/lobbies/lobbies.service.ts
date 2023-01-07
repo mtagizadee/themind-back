@@ -55,6 +55,33 @@ export class LobbiesService {
   }
 
   /**
+   * Generates an invitation link for a lobby
+   * @param id - the id of the lobby
+   * @param userId - the id of the user
+   * @returns the invitation link
+   */
+  async generateInvitationLink(id: string, userId: string) {
+    try {
+      const lobbies = await this.deleteExpiredLobbies();
+      const lobby: TLobby = lobbies[id];
+      if (!lobby) throw new NotFoundException("Lobby is not found!");
+
+      // check if the user is the author of the lobby
+      if (lobby.authorId !== userId) {
+        throw new ConflictException("You are not the author of the lobby!");
+      }
+
+      // generate the invitation link
+      const link = process.env.FRONT_URL + "/invite/" + id;
+      await this.redis.set("lobbies", JSON.stringify(lobbies));
+
+      return { link };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
    * Deletes the expired lobbies (1 day)
    * @returns the lobbies after deleting the expired ones
    */

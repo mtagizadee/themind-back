@@ -18,4 +18,9 @@ export class LobbiesController {
   findOne(@Param("id") id: string) {
     return this.lobbiesService.findOne(id);
   }
+
+  @Post(":id/invitation-link")
+  generateInvitationLink(@Param("id") id: string, @User("id") userId: string) {
+    return this.lobbiesService.generateInvitationLink(id, userId);
+  }
 }
