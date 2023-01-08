@@ -8,7 +8,7 @@ import { InjectRedis } from "@liaoliaots/nestjs-redis";
 import Redis from "ioredis";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
 import { v4 } from "uuid";
-import { lobbyResponseFactory, TLobby } from "./types/lobby.type";
+import { TLobby } from "./types/lobby.type";
 import { generateExpirationDate } from "src/helpers";
 
 @Injectable()
@@ -29,15 +29,18 @@ export class LobbiesService {
     try {
       // Get the lobbies from the redis and add the new one
       const lobbies = JSON.parse(await this.redis.get("lobbies"));
-      lobbies[id] = {
+
+      const newLobby: TLobby = {
         playersNumber,
         wsToken,
         players: [],
         authorId: userId,
         expiresAt: generateExpirationDate(1),
-      } as TLobby;
-      await this.redis.set("lobbies", JSON.stringify(lobbies));
+      };
 
+      lobbies[id] = newLobby;
+
+      await this.redis.set("lobbies", JSON.stringify(lobbies));
       return { id };
     } catch (error) {
       throw new ConflictException("Could not create a new lobby");
@@ -55,7 +58,7 @@ export class LobbiesService {
       const lobby: TLobby = lobbies[id];
       if (!lobby) throw new NotFoundException("Lobby is not found!");
 
-      return lobbyResponseFactory(lobby);
+      return lobby;
     } catch (error) {
       throw error;
     }

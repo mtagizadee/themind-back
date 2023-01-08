@@ -3,6 +3,7 @@ import { User } from "src/auth/decorators/user.decorator";
 import { JwtGuard } from "src/auth/guards/jwt.guard";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
 import { LobbiesService } from "./lobbies.service";
+import { lobbyResponseFactory } from "./types/lobby.type";
 
 @UseGuards(JwtGuard)
 @Controller("lobbies")
@@ -15,8 +16,8 @@ export class LobbiesController {
   }
 
   @Get(":id")
-  findOne(@Param("id") id: string) {
-    return this.lobbiesService.findOne(id);
+  async findOne(@Param("id") id: string) {
+    return lobbyResponseFactory(await this.lobbiesService.findOne(id));
   }
 
   @Post(":id/invitation-link")
