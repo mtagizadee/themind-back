@@ -100,7 +100,12 @@ export class LobbiesService {
 
       // check if the user already joined the lobby
       if (lobby.players.some((player) => player.id === user.id)) {
-        throw new ForbiddenException("You already joined the lobby!");
+        throw new ConflictException("You already joined the lobby!");
+      }
+
+      // check if the lobby is full
+      if (lobby.players.length === lobby.playersNumber) {
+        throw new ForbiddenException("The lobby is full!");
       }
 
       // add user to the lobby and update the lobbies
