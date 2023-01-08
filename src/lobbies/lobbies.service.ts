@@ -105,11 +105,34 @@ export class LobbiesService {
 
       // add user to the lobby and update the lobbies
       lobby.players.push(user);
-      const lobbies = JSON.parse(await this.redis.get("lobbies"));
-      lobbies[id] = lobby;
+      await this.update(id, lobby);
 
-      await this.redis.set("lobbies", JSON.stringify(lobbies));
       return { wsToken: lobby.wsToken };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Removes a user from the lobby
+   * @param id - the id of the lobby
+   * @param userId - the id of the user that wants to leave the lobby
+   * @returns the message that the user left the lobby successfully
+   */
+  async leave(id: string, userId: string) {
+    try {
+      const lobby: TLobby = await this.findOne(id);
+
+      // check if the user is in the lobby
+      if (!lobby.players.some((player) => player.id === userId)) {
+        throw new ForbiddenException("You are not in the lobby!");
+      }
+
+      // remove the user from the lobby and update the lobbies
+      lobby.players = lobby.players.filter((player) => player.id !== userId);
+      await this.update(id, lobby);
+
+      return { message: "User left the lobby successfully!" };
     } catch (error) {
       throw error;
     }
@@ -135,6 +158,27 @@ export class LobbiesService {
       return lobbies;
     } catch (error) {
       throw new ConflictException("Could not delete expired lobbies");
+    }
+  }
+
+  /**
+   * Updates a lobby
+   * @param id - the id of the lobby
+   * @param target - the target user
+   * @returns the message that the lobby was updated successfully
+   */
+  private async update(id: string, lobby: TLobby) {
+    try {
+      const lobbies = await this.deleteExpiredLobbies();
+      const target = lobbies[id];
+      if (!target) throw new NotFoundException("Lobby is not found!");
+
+      lobbies[id] = lobby;
+      await this.redis.set("lobbies", JSON.stringify(lobbies));
+
+      return { message: "Lobby updated successfully!" };
+    } catch (error) {
+      throw error;
     }
   }
 }
