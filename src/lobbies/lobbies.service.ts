@@ -128,9 +128,15 @@ export class LobbiesService {
         throw new ForbiddenException("You are not in the lobby!");
       }
 
-      // remove the user from the lobby and update the lobbies
+      const isLastUser: boolean = lobby.players.length === 1;
       lobby.players = lobby.players.filter((player) => player.id !== userId);
-      await this.update(id, lobby);
+
+      // if the user is the last one in the lobby, delete the lobby
+      // else update the lobby and set the new author
+      if (!isLastUser) {
+        lobby.authorId = lobby.players[0].id;
+        await this.update(id, lobby);
+      } else await this.delete(id);
 
       return { message: "User left the lobby successfully!" };
     } catch (error) {
