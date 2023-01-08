@@ -129,12 +129,16 @@ export class LobbiesService {
       }
 
       const isLastUser: boolean = lobby.players.length === 1;
+      const isAuthor = lobby.authorId === userId;
       lobby.players = lobby.players.filter((player) => player.id !== userId);
 
       // if the user is the last one in the lobby, delete the lobby
       // else update the lobby and set the new author
       if (!isLastUser) {
-        lobby.authorId = lobby.players[0].id;
+        if (isAuthor) {
+          lobby.authorId = lobby.players[0].id;
+        }
+
         await this.update(id, lobby);
       } else await this.delete(id);
 
