@@ -181,4 +181,24 @@ export class LobbiesService {
       throw error;
     }
   }
+
+  /**
+   * Deletes a lobby
+   * @param id - the id of the lobby that will be deleted
+   * @returns the message that the lobby was deleted successfully
+   */
+  private async delete(id: string) {
+    try {
+      const lobbies = await this.deleteExpiredLobbies();
+      const target = lobbies[id];
+      if (!target) throw new NotFoundException("Lobby is not found!");
+
+      delete lobbies[id];
+      await this.redis.set("lobbies", JSON.stringify(lobbies));
+
+      return { message: "Lobby deleted successfully!" };
+    } catch (error) {
+      throw error;
+    }
+  }
 }
