@@ -3,7 +3,7 @@ import { AuthService } from "./auth.service";
 import { User } from "./decorators/user.decorator";
 import { AddUserDto } from "./dto/add-user.dto";
 import { JwtGuard } from "./guards/jwt.guard";
-import { JwtPayload } from "./strategy/jwt.strategy";
+import { TJwtPayload } from "./strategy/jwt.strategy";
 
 @Controller("auth")
 export class AuthController {
@@ -16,7 +16,7 @@ export class AuthController {
 
   @UseGuards(JwtGuard)
   @Get("me")
-  async me(@User() user: JwtPayload) {
+  async me(@User() user: TJwtPayload) {
     return user;
   }
 }

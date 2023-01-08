@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { AddUserDto } from "./dto/add-user.dto";
 import { JwtService } from "@nestjs/jwt/dist";
 import { v4 } from "uuid";
-import { JwtPayload } from "./strategy/jwt.strategy";
+import { TJwtPayload } from "./strategy/jwt.strategy";
 
 type AuthToken = { token: string };
 
@@ -20,7 +20,7 @@ export class AuthService {
     const id = v4();
 
     // generate a token
-    const jwtToken = this.jwt.sign({ nickname, id } as JwtPayload, {
+    const jwtToken = this.jwt.sign({ nickname, id } as TJwtPayload, {
       secret: process.env.JWT_SECRET,
       expiresIn: "12h",
     });

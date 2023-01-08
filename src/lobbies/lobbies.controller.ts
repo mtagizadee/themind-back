@@ -1,6 +1,7 @@
 import { Controller, UseGuards, Body, Post, Get, Param, Patch } from "@nestjs/common";
 import { User } from "src/auth/decorators/user.decorator";
 import { JwtGuard } from "src/auth/guards/jwt.guard";
+import { TJwtPayload } from "src/auth/strategy/jwt.strategy";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
 import { LobbiesService } from "./lobbies.service";
 import { lobbyResponseFactory } from "./types/lobby.type";
@@ -27,7 +28,7 @@ export class LobbiesController {
 
   // TODO: test this endpoint
   @Patch(":id/join")
-  join(@Param("id") id: string, @User("id") userId: string) {
-    return this.lobbiesService.join(id, userId);
+  join(@Param("id") id: string, @User() user: TJwtPayload) {
+    return this.lobbiesService.join(id, user);
   }
 }

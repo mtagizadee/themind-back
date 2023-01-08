@@ -10,6 +10,7 @@ import { CreateLobbyDto } from "./dto/create-lobby.dto";
 import { v4 } from "uuid";
 import { TLobby } from "./types/lobby.type";
 import { generateExpirationDate } from "src/helpers";
+import { TJwtPayload } from "src/auth/strategy/jwt.strategy";
 
 @Injectable()
 export class LobbiesService {
@@ -93,17 +94,17 @@ export class LobbiesService {
    * @param userId - the id of the user that wants to join the lobby
    * @returns the wsToken of the lobby
    */
-  async join(id: string, userId: string) {
+  async join(id: string, user: TJwtPayload) {
     try {
-      const lobby = await this.findOne(id);
+      const lobby: TLobby = await this.findOne(id);
 
       // check if the user already joined the lobby
-      if (lobby.players.includes(userId)) {
+      if (lobby.players.some((player) => player.id === user.id)) {
         throw new ForbiddenException("You already joined the lobby!");
       }
 
       // add user to the lobby and update the lobbies
-      lobby.players.push(userId);
+      lobby.players.push(user);
       const lobbies = JSON.parse(await this.redis.get("lobbies"));
       lobbies[id] = lobby;
 

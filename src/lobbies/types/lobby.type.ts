@@ -1,6 +1,8 @@
+import { TJwtPayload } from "src/auth/strategy/jwt.strategy";
+
 export type TLobby = {
   playersNumber: number;
-  players: string[]; // TODO: change to an array of player objects
+  players: TJwtPayload[];
   authorId: string;
   expiresAt: Date;
   wsToken: string;
