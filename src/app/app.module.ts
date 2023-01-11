@@ -10,8 +10,6 @@ import { LobbiesModule } from "src/lobbies/lobbies.module";
 
 @Module({
   imports: [
-    AuthModule,
-    LobbiesModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: `.env.${process.env.NODE_ENV}`,
@@ -41,6 +39,8 @@ import { LobbiesModule } from "src/lobbies/lobbies.module";
         },
       }),
     }),
+    AuthModule,
+    LobbiesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
