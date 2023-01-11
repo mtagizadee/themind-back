@@ -4,10 +4,11 @@ import {
   SubscribeMessage,
   MessageBody,
   ConnectedSocket,
+  WebSocketServer,
 } from "@nestjs/websockets";
-import { Socket } from "dgram";
 import { JoinLobbyDto } from "./dto/join-lobby.dto";
 import { config } from "dotenv";
+import { Server, Socket } from "socket.io";
 
 @WebSocketGateway(
   parseInt(
@@ -15,15 +16,19 @@ import { config } from "dotenv";
       path: `.env.${process.env.NODE_ENV}`,
     }).parsed.WS_PORT
   ),
-  { namespace: "lobbies" }
+  {
+    cors: {
+      origin: "*",
+    },
+  }
 )
 export class LobbiesGateway {
+  @WebSocketServer()
+  server: Server;
+
   @UsePipes(new ValidationPipe())
   @SubscribeMessage("join")
   handleJoin(@MessageBody() data: JoinLobbyDto, @ConnectedSocket() client: Socket) {
-    client.emit("joined", data, (data: JoinLobbyDto) => {
-      console.log(data);
-    });
-    return { event: "joined", data };
+    console.log(`User with nickname ${data.nickname} and id ${data.id} joined the lobby`);
   }
 }
