@@ -10,7 +10,12 @@ import { config } from "dotenv";
 import { Server, Socket } from "socket.io";
 import { LobbiesService } from "./lobbies.service";
 import { LeaveLobbyDto } from "./dto/leave-lobby.dto";
+import { WsAuthGuard } from "../auth/guards/ws-auth.guard";
+import { UseGuards } from "@nestjs/common/decorators/core/use-guards.decorator";
+import { Client } from "../auth/decorators/client.decorator";
+import { TJwtPayload } from "../auth/strategy/jwt.strategy";
 
+@UseGuards(WsAuthGuard)
 @WebSocketGateway(
   parseInt(
     config({
@@ -30,7 +35,12 @@ export class LobbiesGateway {
   constructor(private readonly lobbiesService: LobbiesService) {}
 
   @SubscribeMessage("lobby:join")
-  async handleJoin(@MessageBody() joinLobbyDto: JoinLobbyDto) {
+  async handleJoin(
+    @MessageBody() joinLobbyDto: JoinLobbyDto,
+    @ConnectedSocket() socket: Socket,
+    @Client() client: TJwtPayload
+  ) {
+    console.log(client);
     const response = await this.lobbiesService.join(joinLobbyDto.lobbyId, {
       id: joinLobbyDto.userId,
       nickname: joinLobbyDto.nickname,
