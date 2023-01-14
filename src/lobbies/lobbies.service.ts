@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectRedis } from "@liaoliaots/nestjs-redis";
 import Redis from "ioredis";
 import { CreateLobbyDto } from "./dto/create-lobby.dto";
@@ -11,6 +6,8 @@ import { v4 } from "uuid";
 import { TLobby } from "./types/lobby.type";
 import { generateExpirationDate } from "src/helpers";
 import { TJwtPayload } from "src/auth/strategy/jwt.strategy";
+import { WsException } from "@nestjs/websockets/errors";
+import { HttpStatus } from "@nestjs/common/enums";
 
 @Injectable()
 export class LobbiesService {
@@ -92,27 +89,30 @@ export class LobbiesService {
    * Adds a user to the lobby
    * @param id - the id of the lobby
    * @param userId - the id of the user that wants to join the lobby
-   * @returns the wsToken of the lobby
+   * @returns the wsToken of the lobby and lobby itself
    */
   async join(id: string, user: TJwtPayload) {
     try {
       const lobby: TLobby = await this.findOne(id);
 
       // check if the user already joined the lobby
-      if (lobby.players.some((player) => player.id === user.id)) {
-        throw new ConflictException("You already joined the lobby!");
-      }
+      const userInLobby = lobby.players.some((player) => player.id === user.id);
 
       // check if the lobby is full
-      if (lobby.players.length === lobby.playersNumber) {
-        throw new ForbiddenException("The lobby is full!");
+      if (!userInLobby && lobby.players.length === lobby.playersNumber) {
+        throw new WsException({
+          status: HttpStatus.FORBIDDEN,
+          message: "The lobby is full!",
+        });
       }
 
       // add user to the lobby and update the lobbies
-      lobby.players.push(user);
-      await this.update(id, lobby);
+      if (!userInLobby) {
+        lobby.players.push(user);
+        await this.update(id, lobby);
+      }
 
-      return { wsToken: lobby.wsToken };
+      return { wsToken: lobby.wsToken, lobby };
     } catch (error) {
       throw error;
     }
@@ -130,7 +130,10 @@ export class LobbiesService {
 
       // check if the user is in the lobby
       if (!lobby.players.some((player) => player.id === userId)) {
-        throw new ForbiddenException("You are not in the lobby!");
+        throw new WsException({
+          staus: HttpStatus.FORBIDDEN,
+          message: "You are not in the lobby!",
+        });
       }
 
       const isLastUser: boolean = lobby.players.length === 1;
@@ -164,7 +167,7 @@ export class LobbiesService {
       // iterate over and delete those that have expired
       const currentDate = new Date();
       Object.keys(lobbies).forEach((lobbyId: string) => {
-        if (lobbies[lobbyId].expiresAt < currentDate) {
+        if (new Date(lobbies[lobbyId].expiresAt) < currentDate) {
           delete lobbies[lobbyId];
         }
       });
@@ -172,6 +175,7 @@ export class LobbiesService {
       await this.redis.set("lobbies", JSON.stringify(lobbies));
       return lobbies;
     } catch (error) {
+      console.log(error);
       throw new ConflictException("Could not delete expired lobbies");
     }
   }

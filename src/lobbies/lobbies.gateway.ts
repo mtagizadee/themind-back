@@ -1,4 +1,3 @@
-import { UsePipes, ValidationPipe } from "@nestjs/common";
 import {
   WebSocketGateway,
   SubscribeMessage,
@@ -9,6 +8,8 @@ import {
 import { JoinLobbyDto } from "./dto/join-lobby.dto";
 import { config } from "dotenv";
 import { Server, Socket } from "socket.io";
+import { LobbiesService } from "./lobbies.service";
+import { LeaveLobbyDto } from "./dto/leave-lobby.dto";
 
 @WebSocketGateway(
   parseInt(
@@ -26,9 +27,25 @@ export class LobbiesGateway {
   @WebSocketServer()
   server: Server;
 
-  @UsePipes(new ValidationPipe())
-  @SubscribeMessage("join")
-  handleJoin(@MessageBody() data: JoinLobbyDto, @ConnectedSocket() client: Socket) {
-    console.log(`User with nickname ${data.nickname} and id ${data.id} joined the lobby`);
+  constructor(private readonly lobbiesService: LobbiesService) {}
+
+  @SubscribeMessage("lobby:join")
+  async handleJoin(@MessageBody() joinLobbyDto: JoinLobbyDto) {
+    const response = await this.lobbiesService.join(joinLobbyDto.lobbyId, {
+      id: joinLobbyDto.userId,
+      nickname: joinLobbyDto.nickname,
+    });
+
+    this.server.emit("lobby:join", joinLobbyDto);
+    return response;
+  }
+
+  @SubscribeMessage("lobby:leave")
+  async handleLeave(@MessageBody() leaveLobbyDto: LeaveLobbyDto) {
+    const response = await this.lobbiesService.leave(leaveLobbyDto.lobbyId, leaveLobbyDto.userId);
+
+    this.server.emit("lobby:leave", leaveLobbyDto.userId);
+    console.log(response);
+    return response;
   }
 }
