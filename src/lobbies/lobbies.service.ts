@@ -8,6 +8,7 @@ import { generateExpirationDate } from "src/helpers";
 import { TJwtPayload } from "src/auth/strategy/jwt.strategy";
 import { WsException } from "@nestjs/websockets/errors";
 import { HttpStatus } from "@nestjs/common/enums";
+import { ERedisKeys } from "src/common/enums";
 
 @Injectable()
 export class LobbiesService {
@@ -22,15 +23,13 @@ export class LobbiesService {
   async create(createLobbyDto: CreateLobbyDto, userId: string) {
     const { playersNumber } = createLobbyDto;
     const id = v4();
-    const wsToken = v4();
 
     try {
       // Get the lobbies from the redis and add the new one
-      const lobbies = JSON.parse(await this.redis.get("lobbies"));
+      const lobbies = JSON.parse(await this.redis.get(ERedisKeys.Lobbies));
 
       const newLobby: TLobby = {
         playersNumber,
-        wsToken,
         players: [],
         authorId: userId,
         expiresAt: generateExpirationDate(1),
@@ -38,7 +37,7 @@ export class LobbiesService {
 
       lobbies[id] = newLobby;
 
-      await this.redis.set("lobbies", JSON.stringify(lobbies));
+      await this.redis.set(ERedisKeys.Lobbies, JSON.stringify(lobbies));
       return { id };
     } catch (error) {
       throw new ConflictException("Could not create a new lobby");
@@ -112,7 +111,7 @@ export class LobbiesService {
         await this.update(id, lobby);
       }
 
-      return { wsToken: lobby.wsToken, lobby };
+      return { lobby, userInLobby };
     } catch (error) {
       throw error;
     }
@@ -162,7 +161,7 @@ export class LobbiesService {
    */
   private async deleteExpiredLobbies() {
     try {
-      const lobbies = JSON.parse(await this.redis.get("lobbies"));
+      const lobbies = JSON.parse(await this.redis.get(ERedisKeys.Lobbies));
 
       // iterate over and delete those that have expired
       const currentDate = new Date();
@@ -172,7 +171,7 @@ export class LobbiesService {
         }
       });
 
-      await this.redis.set("lobbies", JSON.stringify(lobbies));
+      await this.redis.set(ERedisKeys.Lobbies, JSON.stringify(lobbies));
       return lobbies;
     } catch (error) {
       console.log(error);
@@ -193,7 +192,7 @@ export class LobbiesService {
       if (!target) throw new NotFoundException("Lobby is not found!");
 
       lobbies[id] = lobby;
-      await this.redis.set("lobbies", JSON.stringify(lobbies));
+      await this.redis.set(ERedisKeys.Lobbies, JSON.stringify(lobbies));
 
       return { message: "Lobby updated successfully!" };
     } catch (error) {
@@ -213,7 +212,7 @@ export class LobbiesService {
       if (!target) throw new NotFoundException("Lobby is not found!");
 
       delete lobbies[id];
-      await this.redis.set("lobbies", JSON.stringify(lobbies));
+      await this.redis.set(ERedisKeys.Lobbies, JSON.stringify(lobbies));
 
       return { message: "Lobby deleted successfully!" };
     } catch (error) {

@@ -4,7 +4,7 @@ import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { Redis } from "ioredis";
 import { RedisModule } from "@liaoliaots/nestjs-redis";
-import { RedisKeys } from "src/common/enums";
+import { ERedisKeys } from "src/common/enums";
 import { AuthModule } from "src/auth/auth.module";
 import { LobbiesModule } from "src/lobbies/lobbies.module";
 
@@ -23,9 +23,9 @@ import { LobbiesModule } from "src/lobbies/lobbies.module";
             redisClient.on("ready", async () => {
               // initialize empty lobbies object if it doesn't exist
               // object is the list of tokes that are allowed to play the game
-              if (!(await redisClient.get(RedisKeys.Lobbies))) {
+              if (!(await redisClient.get(ERedisKeys.Lobbies))) {
                 try {
-                  await redisClient.set(RedisKeys.Lobbies, JSON.stringify({}));
+                  await redisClient.set(ERedisKeys.Lobbies, JSON.stringify({}));
                   console.log("Successfully initialized empty lobbies");
                 } catch (error) {
                   console.log("Error initializing the empty lobbies");

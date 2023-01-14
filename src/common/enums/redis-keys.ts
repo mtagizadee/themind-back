@@ -1,3 +1,3 @@
-export enum RedisKeys {
+export enum ERedisKeys {
   Lobbies = "lobbies",
 }
