@@ -53,7 +53,6 @@ export class LobbiesService {
     try {
       const lobbies = await this.deleteExpiredLobbies();
       const lobby: TLobby = lobbies[id];
-      if (!lobby) throw new NotFoundException("Lobby is not found!");
 
       return lobby;
     } catch (error) {
@@ -70,6 +69,7 @@ export class LobbiesService {
   async generateInvitationLink(id: string, userId: string) {
     try {
       const lobby = await this.findOne(id);
+      if (!lobby) throw new NotFoundException("Lobby not found!");
 
       // check if the user is the author of the lobby
       if (lobby.authorId !== userId) {
@@ -93,6 +93,11 @@ export class LobbiesService {
   async join(id: string, user: TJwtPayload) {
     try {
       const lobby: TLobby = await this.findOne(id);
+      if (!lobby)
+        throw new WsException({
+          status: HttpStatus.NOT_FOUND,
+          message: "Lobby not found!",
+        });
 
       // check if the user already joined the lobby
       const userInLobby = lobby.players.some((player) => player.id === user.id);
@@ -126,6 +131,11 @@ export class LobbiesService {
   async leave(id: string, userId: string) {
     try {
       const lobby: TLobby = await this.findOne(id);
+      if (!lobby)
+        throw new WsException({
+          status: HttpStatus.NOT_FOUND,
+          message: "Lobby not found!",
+        });
 
       // check if the user is in the lobby
       if (!lobby.players.some((player) => player.id === userId)) {
@@ -174,8 +184,10 @@ export class LobbiesService {
       await this.redis.set(ERedisKeys.Lobbies, JSON.stringify(lobbies));
       return lobbies;
     } catch (error) {
-      console.log(error);
-      throw new ConflictException("Could not delete expired lobbies");
+      throw new WsException({
+        status: HttpStatus.CONFLICT,
+        message: "Could not delete expired lobbies",
+      });
     }
   }
 
@@ -189,7 +201,11 @@ export class LobbiesService {
     try {
       const lobbies = await this.deleteExpiredLobbies();
       const target = lobbies[id];
-      if (!target) throw new NotFoundException("Lobby is not found!");
+      if (!target)
+        throw new WsException({
+          status: HttpStatus.NOT_FOUND,
+          message: "Lobby is not found!",
+        });
 
       lobbies[id] = lobby;
       await this.redis.set(ERedisKeys.Lobbies, JSON.stringify(lobbies));
@@ -209,7 +225,11 @@ export class LobbiesService {
     try {
       const lobbies = await this.deleteExpiredLobbies();
       const target = lobbies[id];
-      if (!target) throw new NotFoundException("Lobby is not found!");
+      if (!target)
+        throw new WsException({
+          status: HttpStatus.NOT_FOUND,
+          message: "Lobby is not found!",
+        });
 
       delete lobbies[id];
       await this.redis.set(ERedisKeys.Lobbies, JSON.stringify(lobbies));

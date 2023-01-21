@@ -3,6 +3,14 @@ import { JwtService } from "@nestjs/jwt";
 import { TJwtPayload } from "../strategy/jwt.strategy";
 import { WsException } from "@nestjs/websockets";
 
+export type TVerifiedUser = TJwtPayload & { iat: number; exp: number };
+
+const clientFactory = (payload: TVerifiedUser) => {
+  delete payload.iat;
+  delete payload.exp;
+  return payload;
+};
+
 @Injectable()
 export class WsAuthGuard implements CanActivate {
   constructor(private readonly jwt: JwtService) {}
@@ -12,8 +20,8 @@ export class WsAuthGuard implements CanActivate {
     const jwtToken = client.handshake.auth.jwtToken;
 
     try {
-      const user = this.jwt.verify(jwtToken, { secret: process.env.JWT_SECRET }) as TJwtPayload;
-      client.user = user;
+      const user = this.jwt.verify(jwtToken, { secret: process.env.JWT_SECRET }) as TVerifiedUser;
+      client.user = clientFactory(user);
 
       return !!user;
     } catch (error) {

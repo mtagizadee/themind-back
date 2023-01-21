@@ -3,10 +3,11 @@ import {
   SubscribeMessage,
   MessageBody,
   WebSocketServer,
+  ConnectedSocket,
 } from "@nestjs/websockets";
 import { JoinLobbyDto } from "./dto/join-lobby.dto";
 import { config } from "dotenv";
-import { Server } from "socket.io";
+import { Server, Socket } from "socket.io";
 import { LobbiesService } from "./lobbies.service";
 import { LeaveLobbyDto } from "./dto/leave-lobby.dto";
 import { WsAuthGuard } from "../auth/guards/ws-auth.guard";
@@ -34,34 +35,34 @@ export class LobbiesGateway {
 
   constructor(private readonly lobbiesService: LobbiesService) {}
 
-  /**
-   * Handles the join event from the client to the lobby
-   * @param joinLobbyDto
-   * @param client - the user that is joining the lobby
-   * @returns TLobby - the lobby that the user joined
-   */
   @SubscribeMessage(ELobbyEvents.JOIN)
-  async handleJoin(@MessageBody() joinLobbyDto: JoinLobbyDto, @Client() client: TJwtPayload) {
-    const response = await this.lobbiesService.join(joinLobbyDto.lobbyId, client);
+  async handleJoin(
+    @MessageBody() joinLobbyDto: JoinLobbyDto,
+    @Client() client: TJwtPayload,
+    @ConnectedSocket() socket: Socket
+  ) {
+    const { lobbyId } = joinLobbyDto;
+    const response = await this.lobbiesService.join(lobbyId, client);
 
     if (!response.userInLobby) {
-      this.server.emit(ELobbyEvents.JOIN, client);
+      socket.join(lobbyId);
+      this.server.to(lobbyId).emit(ELobbyEvents.JOIN, client);
     }
 
     return response.lobby;
   }
 
-  /**
-   * Handles the leave event from the client from the lobby
-   * @param leaveLobbyDto
-   * @param userId - the id of the user that is leaving the lobby
-   * @returns message that the user left the lobby
-   */
   @SubscribeMessage(ELobbyEvents.LEAVE)
-  async handleLeave(@MessageBody() leaveLobbyDto: LeaveLobbyDto, @Client("id") userId: string) {
-    const response = await this.lobbiesService.leave(leaveLobbyDto.lobbyId, userId);
+  async handleLeave(
+    @MessageBody() leaveLobbyDto: LeaveLobbyDto,
+    @Client("id") userId: string,
+    @ConnectedSocket() socket: Socket
+  ) {
+    const { lobbyId } = leaveLobbyDto;
+    const response = await this.lobbiesService.leave(lobbyId, userId);
 
-    this.server.emit(ELobbyEvents.LEAVE, userId);
+    this.server.to(lobbyId).emit(ELobbyEvents.LEAVE, userId);
+    socket.leave(lobbyId);
     return response;
   }
 }
