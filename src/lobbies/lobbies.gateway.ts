@@ -15,6 +15,7 @@ import { UseGuards } from "@nestjs/common/decorators/core/use-guards.decorator";
 import { Client } from "../auth/decorators/client.decorator";
 import { TJwtPayload } from "../auth/strategy/jwt.strategy";
 import { ELobbyEvents } from "src/common/enums";
+import { generateRoom } from "src/helpers";
 
 @UseGuards(WsAuthGuard)
 @WebSocketGateway(
@@ -42,11 +43,12 @@ export class LobbiesGateway {
     @ConnectedSocket() socket: Socket
   ) {
     const { lobbyId } = joinLobbyDto;
+    const room = generateRoom(lobbyId);
     const response = await this.lobbiesService.join(lobbyId, client);
 
     if (!response.userInLobby) {
-      socket.join(lobbyId);
-      this.server.to(lobbyId).emit(ELobbyEvents.JOIN, client);
+      await socket.join(room);
+      socket.to(room).emit(ELobbyEvents.JOIN, client);
     }
 
     return response.lobby;
@@ -59,10 +61,11 @@ export class LobbiesGateway {
     @ConnectedSocket() socket: Socket
   ) {
     const { lobbyId } = leaveLobbyDto;
+    const room = generateRoom(lobbyId);
     const response = await this.lobbiesService.leave(lobbyId, userId);
 
-    this.server.to(lobbyId).emit(ELobbyEvents.LEAVE, userId);
-    socket.leave(lobbyId);
+    socket.to(room).emit(ELobbyEvents.LEAVE, userId);
+    await socket.leave(room);
     return response;
   }
 }

@@ -3,3 +3,7 @@ export const generateExpirationDate = (days: number) => {
   date.setDate(date.getDate() + days);
   return date;
 };
+
+export const generateRoom = (lobbyId: string) => {
+  return `lobby-${lobbyId}`;
+};
