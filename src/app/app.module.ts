@@ -7,6 +7,7 @@ import { RedisModule } from "@liaoliaots/nestjs-redis";
 import { ERedisKeys } from "src/common/enums";
 import { AuthModule } from "src/auth/auth.module";
 import { LobbiesModule } from "src/lobbies/lobbies.module";
+import { GamesModule } from "src/games/games.module";
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { LobbiesModule } from "src/lobbies/lobbies.module";
     }),
     AuthModule,
     LobbiesModule,
+    GamesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
