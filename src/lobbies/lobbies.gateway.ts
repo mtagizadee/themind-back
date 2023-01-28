@@ -16,6 +16,7 @@ import { Client } from "../auth/decorators/client.decorator";
 import { TJwtPayload } from "../auth/strategy/jwt.strategy";
 import { ELobbyEvents } from "src/common/enums";
 import { generateRoom } from "src/helpers";
+import { StartLobbyDto } from "./dto/start-lobby.dto";
 
 @UseGuards(WsAuthGuard)
 @WebSocketGateway(
@@ -36,7 +37,7 @@ export class LobbiesGateway {
 
   constructor(private readonly lobbiesService: LobbiesService) {}
 
-  @SubscribeMessage(ELobbyEvents.JOIN)
+  @SubscribeMessage(ELobbyEvents.Join)
   async handleJoin(
     @MessageBody() joinLobbyDto: JoinLobbyDto,
     @Client() client: TJwtPayload,
@@ -48,13 +49,13 @@ export class LobbiesGateway {
 
     if (!response.userInLobby) {
       await socket.join(room);
-      socket.to(room).emit(ELobbyEvents.JOIN, client);
+      socket.to(room).emit(ELobbyEvents.Join, client);
     }
 
     return response.lobby;
   }
 
-  @SubscribeMessage(ELobbyEvents.LEAVE)
+  @SubscribeMessage(ELobbyEvents.Leave)
   async handleLeave(
     @MessageBody() leaveLobbyDto: LeaveLobbyDto,
     @Client("id") userId: string,
@@ -64,8 +65,18 @@ export class LobbiesGateway {
     const room = generateRoom(lobbyId);
     const response = await this.lobbiesService.leave(lobbyId, userId);
 
-    socket.to(room).emit(ELobbyEvents.LEAVE, userId);
+    socket.to(room).emit(ELobbyEvents.Leave, userId);
     await socket.leave(room);
     return response;
+  }
+
+  @SubscribeMessage(ELobbyEvents.Start)
+  async handleStart(
+    @MessageBody() startLobbyDto: StartLobbyDto,
+    @Client("id") userId: string,
+    @ConnectedSocket() socket: Socket
+  ) {
+    const { lobbyId } = startLobbyDto;
+    const room = generateRoom(lobbyId);
   }
 }

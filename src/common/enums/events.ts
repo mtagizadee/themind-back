@@ -1,4 +1,5 @@
 export enum ELobbyEvents {
-  JOIN = "lobby:join",
-  LEAVE = "lobby:leave",
+  Join = "lobby:join",
+  Leave = "lobby:leave",
+  Start = "lobby:start",
 }

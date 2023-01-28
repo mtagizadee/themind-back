@@ -31,6 +31,15 @@ import { LobbiesModule } from "src/lobbies/lobbies.module";
                   console.log("Error initializing the empty lobbies");
                 }
               }
+
+              if (!(await redisClient.get(ERedisKeys.Games))) {
+                try {
+                  await redisClient.set(ERedisKeys.Games, JSON.stringify({}));
+                  console.log("Successfully initialized empty games");
+                } catch (error) {
+                  console.log("Error initializing the empty games");
+                }
+              }
             });
             redisClient.on("error", async () => {
               console.log("Error while connecting to client");

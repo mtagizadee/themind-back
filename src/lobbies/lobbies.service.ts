@@ -165,6 +165,26 @@ export class LobbiesService {
     }
   }
 
+  async start(lobbyId: string, userId: string) {
+    try {
+      const lobby = await this.findOne(lobbyId);
+
+      if (!lobby)
+        throw new WsException({
+          status: HttpStatus.NOT_FOUND,
+          message: "Lobby not found!",
+        });
+
+      const isAuthor = lobby.authorId === userId;
+      if (isAuthor) {
+        throw new WsException({
+          status: HttpStatus.FORBIDDEN,
+          message: "You are not the author of the lobby!",
+        });
+      }
+    } catch (error) {}
+  }
+
   /**
    * Deletes the expired lobbies (1 day)
    * @returns the lobbies after deleting the expired ones
