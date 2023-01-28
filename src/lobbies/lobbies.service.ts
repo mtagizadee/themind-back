@@ -9,10 +9,15 @@ import { TJwtPayload } from "src/auth/strategy/jwt.strategy";
 import { WsException } from "@nestjs/websockets/errors";
 import { HttpStatus } from "@nestjs/common/enums";
 import { ERedisKeys } from "src/common/enums";
+import { GamesService } from "src/games/games.service";
+import { playerFactory } from "src/games/types/player.type";
 
 @Injectable()
 export class LobbiesService {
-  constructor(@InjectRedis() private readonly redis: Redis) {}
+  constructor(
+    @InjectRedis() private readonly redis: Redis,
+    private readonly gamesService: GamesService
+  ) {}
 
   /**
    * Creates a new lobby
@@ -165,6 +170,12 @@ export class LobbiesService {
     }
   }
 
+  /**
+   * Starts the game and deletes the lobby from the redis
+   * @param lobbyId - the id of the lobby that should be deleted after the game has started
+   * @param userId - the id of the user that wants to start the game
+   * @returns the object that contains the game id
+   */
   async start(lobbyId: string, userId: string) {
     try {
       const lobby = await this.findOne(lobbyId);
@@ -182,7 +193,19 @@ export class LobbiesService {
           message: "You are not the author of the lobby!",
         });
       }
-    } catch (error) {}
+
+      const response = await this.gamesService.create({
+        id: lobbyId,
+        players: lobby.players.map((player) => playerFactory(player)),
+      });
+
+      // delete the lobby after the game has started
+      await this.delete(lobbyId);
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**

@@ -78,5 +78,8 @@ export class LobbiesGateway {
   ) {
     const { lobbyId } = startLobbyDto;
     const room = generateRoom(lobbyId);
+
+    const response = await this.lobbiesService.start(lobbyId, userId);
+    socket.to(room).emit(ELobbyEvents.Start, response);
   }
 }

@@ -10,7 +10,11 @@ export class GamesService {
 
   async create(createGameDto: CreateGameDto) {
     const games = JSON.parse(await this.redis.get(ERedisKeys.Games));
-    games[createGameDto.id] = { players: createGameDto.players };
+    const id = createGameDto.id;
+
+    games[id] = { players: createGameDto.players };
     await this.redis.set(ERedisKeys.Games, JSON.stringify(games));
+
+    return { id };
   }
 }
