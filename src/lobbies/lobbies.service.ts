@@ -110,7 +110,7 @@ export class LobbiesService {
       // check if the lobby is full
       if (!userInLobby && lobby.players.length === lobby.playersNumber) {
         throw new WsException({
-          status: HttpStatus.FORBIDDEN,
+          status: HttpStatus.CONFLICT,
           message: "The lobby is full!",
         });
       }
