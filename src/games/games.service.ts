@@ -1,6 +1,6 @@
 import { InjectRedis } from "@liaoliaots/nestjs-redis";
 import { Injectable } from "@nestjs/common";
-import { Redis } from "ioredis";
+import Redis from "ioredis";
 import { ERedisKeys } from "src/common/enums";
 import { CreateGameDto } from "./dto/create-game.dto";
 
