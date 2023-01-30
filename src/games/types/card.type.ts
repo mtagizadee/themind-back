@@ -4,3 +4,7 @@
  * @example "0" - Shooting star card
  */
 export type TCard = string;
+
+export const Card = (value: number): TCard => {
+  return String(value);
+};

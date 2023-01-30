@@ -81,5 +81,7 @@ export class LobbiesGateway {
 
     const response = await this.lobbiesService.start(lobbyId, userId);
     socket.to(room).emit(ELobbyEvents.Start, response);
+
+    return response;
   }
 }

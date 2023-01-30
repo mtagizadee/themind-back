@@ -187,7 +187,7 @@ export class LobbiesService {
         });
 
       const isAuthor = lobby.authorId === userId;
-      if (isAuthor) {
+      if (!isAuthor) {
         throw new WsException({
           status: HttpStatus.FORBIDDEN,
           message: "You are not the author of the lobby!",
@@ -204,6 +204,7 @@ export class LobbiesService {
 
       return response;
     } catch (error) {
+      console.log({ error });
       throw error;
     }
   }
