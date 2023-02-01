@@ -42,6 +42,23 @@ export class GamesService {
   }
 
   /**
+   * Finds a game by its id
+   * @param id - the id of the game to find
+   * @returns the game object
+   */
+  async findOne(id: string) {
+    const games = await this.deleteExpiredGame();
+    const target = games[id];
+    if (!target)
+      throw new WsException({
+        status: HttpStatus.NOT_FOUND,
+        message: "Game is not found!",
+      });
+
+    return target;
+  }
+
+  /**
    * Deletes the expired games
    * @returns the games that have not expired
    */
