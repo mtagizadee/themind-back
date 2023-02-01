@@ -25,8 +25,6 @@ export class GamesService {
     const currentLevel = 1;
     generatePlayersCards(currentLevel, players);
 
-    console.log(players);
-
     const newGame: TGame = {
       players,
       board: [],
