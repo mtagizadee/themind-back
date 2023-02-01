@@ -5,7 +5,7 @@ import { TPlayer } from "src/games/types/player.type";
  * Generates random distinct cards for each player in the level
  * @param level - level of the game
  * @param players - players in the game
- * @returns an array of players with their cards
+ * @returns void
  */
 export const generatePlayersCards = (level: number, players: TPlayer[]) => {
   const usedValues: TCard[] = [];

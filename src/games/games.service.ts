@@ -4,7 +4,7 @@ import { HttpStatus } from "@nestjs/common/enums";
 import { WsException } from "@nestjs/websockets/errors";
 import Redis from "ioredis";
 import { ERedisKeys } from "src/common/enums";
-import { calculateNumberOfLevels, generateExpirationDate } from "src/helpers";
+import { calculateNumberOfLevels, generateExpirationDate, generatePlayersCards } from "src/helpers";
 import { CreateGameDto } from "./dto/create-game.dto";
 import { TGame } from "./types/game.type";
 
@@ -12,14 +12,25 @@ import { TGame } from "./types/game.type";
 export class GamesService {
   constructor(@InjectRedis() private readonly redis: Redis) {}
 
+  /**
+   * Creates a new game
+   * @param createGameDto - the data to create a new game
+   * @returns the id of the newly created game
+   */
   async create(createGameDto: CreateGameDto) {
     const games = await this.deleteExpiredGame();
     const { id, players } = createGameDto;
 
+    // current level is always 1 when a new game is created
+    const currentLevel = 1;
+    generatePlayersCards(currentLevel, players);
+
+    console.log(players);
+
     const newGame: TGame = {
       players,
       board: [],
-      currentLevel: 1,
+      currentLevel,
       lastLevel: calculateNumberOfLevels(players),
       lives: players.length,
       hasShootingStar: false,
@@ -32,6 +43,10 @@ export class GamesService {
     return { id };
   }
 
+  /**
+   * Deletes the expired games
+   * @returns the games that have not expired
+   */
   private async deleteExpiredGame() {
     try {
       const games = JSON.parse(await this.redis.get(ERedisKeys.Games));
@@ -54,6 +69,12 @@ export class GamesService {
     }
   }
 
+  /**
+   * Updates a game by its id
+   * @param id - the id of the game to update
+   * @param game - the data to which the game will be updated
+   * @returns the message that update was successful
+   */
   private async update(id: string, game: TGame) {
     try {
       const games = await this.deleteExpiredGame();
@@ -73,6 +94,11 @@ export class GamesService {
     }
   }
 
+  /**
+   * Deletes a game by its id
+   * @param id - the id of the game to delete
+   * @returns the message that delete was successful
+   */
   private async delete(id: string) {
     try {
       const games = await this.deleteExpiredGame();
