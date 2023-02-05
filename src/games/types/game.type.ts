@@ -14,6 +14,7 @@ export type TGame = {
   currentLevel: number;
   lastLevel: number;
   lives: number;
+  maxLives: number;
   hasShootingStar: boolean;
   expiresAt: Date;
 };

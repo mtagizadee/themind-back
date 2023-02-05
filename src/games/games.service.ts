@@ -25,12 +25,15 @@ export class GamesService {
     const currentLevel = 1;
     generatePlayersCards(currentLevel, players);
 
+    // at the beginning of the game, the number of lives is equal to the number of players
+    const lives = players.length;
     const newGame: TGame = {
       players,
       board: [],
       currentLevel,
       lastLevel: calculateNumberOfLevels(players),
-      lives: players.length,
+      lives,
+      maxLives: lives,
       hasShootingStar: false,
       expiresAt: generateExpirationDate(1),
     };
