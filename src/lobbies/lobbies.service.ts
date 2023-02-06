@@ -194,6 +194,13 @@ export class LobbiesService {
         });
       }
 
+      if (lobby.players.length <= 1) {
+        throw new WsException({
+          status: HttpStatus.FORBIDDEN,
+          message: "You need at least 2 players to start the game!",
+        });
+      }
+
       const response = await this.gamesService.create({
         id: lobbyId,
         players: lobby.players.map((player) => playerFactory(player)),
