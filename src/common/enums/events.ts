@@ -3,3 +3,8 @@ export enum ELobbyEvents {
   Leave = "lobby:leave",
   Start = "lobby:start",
 }
+
+export enum EGameEvents {
+  Play = "game:card:play",
+  Played = "game:card:played",
+}

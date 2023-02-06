@@ -3,10 +3,13 @@ import { Injectable } from "@nestjs/common";
 import { HttpStatus } from "@nestjs/common/enums";
 import { WsException } from "@nestjs/websockets/errors";
 import Redis from "ioredis";
+import { TJwtPayload } from "src/auth/strategy/jwt.strategy";
 import { ERedisKeys } from "src/common/enums";
 import { calculateNumberOfLevels, generateExpirationDate, generatePlayersCards } from "src/helpers";
 import { CreateGameDto } from "./dto/create-game.dto";
+import { PlayCardDto } from "./dto/play-card.dto";
 import { TGame } from "./types/game.type";
+import { TPlayer } from "./types/player.type";
 
 @Injectable()
 export class GamesService {
@@ -49,16 +52,59 @@ export class GamesService {
    * @param id - the id of the game to find
    * @returns the game object
    */
-  async findOne(id: string) {
-    const games = await this.deleteExpiredGame();
-    const target = games[id];
-    if (!target)
-      throw new WsException({
-        status: HttpStatus.NOT_FOUND,
-        message: "Game is not found!",
-      });
+  async findOne(id: string): Promise<TGame> {
+    try {
+      const games = await this.deleteExpiredGame();
+      const target = games[id];
+      if (!target)
+        throw new WsException({
+          status: HttpStatus.NOT_FOUND,
+          message: "Game is not found!",
+        });
 
-    return target;
+      return target;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Plays a card for a player in a game
+   * @param playCardDto - the data to play a card
+   * @param client - the client that is playing the card
+   * @returns the board and the played card
+   */
+  async playCard(playCardDto: PlayCardDto, client: TJwtPayload) {
+    const { card, gameId } = playCardDto;
+    try {
+      const game = await this.findOne(gameId);
+      const { players } = game;
+
+      // check if the player is in the game
+      const player = players.find((player: TPlayer) => player.id === client.id);
+      if (!player) {
+        throw new WsException({
+          status: HttpStatus.NOT_FOUND,
+          message: "You are not in the game to play a card!",
+        });
+      }
+
+      // remove the card from the player's cards
+      player.cards = player.cards.filter((playerCard: string) => playerCard !== card);
+
+      // add the card to the board
+      game.board.push(card);
+
+      return {
+        board: game.board,
+        playedCard: {
+          card,
+          player,
+        },
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 
   /**
