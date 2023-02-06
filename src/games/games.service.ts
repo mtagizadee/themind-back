@@ -95,6 +95,8 @@ export class GamesService {
       // add the card to the board
       game.board.push(card);
 
+      await this.update(gameId, game);
+
       return {
         board: game.board,
         playedCard: {
